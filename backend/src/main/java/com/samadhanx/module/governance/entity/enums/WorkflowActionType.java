@@ -1,0 +1,11 @@
+package com.samadhanx.module.governance.entity.enums;
+
+public enum WorkflowActionType {
+    CHALLENGE_ESCALATION,
+    PROPOSAL_STATUS_TRANSITION,
+    TEAM_FORMATION_APPROVAL,
+    PARTNER_MATCH_APPROVAL,
+    CSR_SPONSORSHIP_APPROVAL,
+    PILOT_DEPLOYMENT_APPROVAL,
+    IMPACT_VERIFICATION_SIGN_OFF
+}

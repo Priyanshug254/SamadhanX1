@@ -1,0 +1,88 @@
+# ================================================================
+# SamadhanX Backend — Base Application Configuration
+# ================================================================
+# Environment-specific overrides live in application-{profile}.yml
+# Active profile is set via SPRING_PROFILES_ACTIVE env variable.
+# ================================================================
+
+spring:
+  application:
+    name: samadhanx-backend
+
+  # Profile activation — override in environment or .env
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # ── Jackson ──────────────────────────────────────────────────
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # ── JPA / Hibernate ──────────────────────────────────────────
+  jpa:
+    open-in-view: false   # Disable OSIV — prevents lazy-loading surprises in controllers
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+
+  # ── Actuator ─────────────────────────────────────────────────
+  # Expose health endpoint publicly; all management endpoints use /actuator prefix
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    app:
+      name: SamadhanX Backend
+      version: "@project.version@"
+      description: Societal Challenge Crowdsourcing and Collaborative Problem-Solving Ecosystem
+
+# ── API / Server ──────────────────────────────────────────────
+server:
+  port: ${PORT:8088}
+  servlet:
+    context-path: /
+  error:
+    include-message: never     # Never leak internal error messages to clients
+    include-stacktrace: never
+    include-exception: false
+
+# ── Springdoc / OpenAPI ──────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+  show-actuator: false
+
+# ── SamadhanX Custom Properties ──────────────────────────────
+samadhanx:
+  jwt:
+    # Supabase Dashboard -> Project Settings -> API -> JWT Secret.
+    secret: ${SUPABASE_JWT_SECRET}
+    expiry-ms: ${JWT_EXPIRY_MS:86400000}     # Default: 24 hours
+    refresh-expiry-ms: ${JWT_REFRESH_EXPIRY_MS:604800000}  # Default: 7 days
+  security:
+    bcrypt-strength: ${BCRYPT_STRENGTH:12}
+  supabase:
+    # Must exactly match your project ref, e.g. https://abc.supabase.co/auth/v1
+    issuer: ${SUPABASE_ISSUER}
+  ai:
+    enabled: ${SAMADHANX_AI_ENABLED:true}
+    provider: ${SAMADHANX_AI_PROVIDER:gemini}
+    api-key: ${SAMADHANX_AI_API_KEY:}
+    model: ${SAMADHANX_AI_MODEL:gemini-1.5-flash}
+    timeout-ms: ${SAMADHANX_AI_TIMEOUT_MS:6000}

@@ -1,0 +1,44 @@
+# ================================================================
+# SamadhanX Backend — PostgreSQL Profile Configuration
+# ================================================================
+# Activated when SPRING_PROFILES_ACTIVE=postgres
+# Configured for PostgreSQL 14+ / 17.
+# ================================================================
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:samadhanx_db}}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME:samadhanx}
+    password: ${DB_PASSWORD:samadhanx_secure_local_dev_pass_2026}
+    hikari:
+      pool-name: SamadhanX-Postgres-HikariPool
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        temp:
+          use_jdbc_metadata_defaults: false
+
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    root: INFO
+    com.samadhanx: INFO
+    org.hibernate.SQL: WARN

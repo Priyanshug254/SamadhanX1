@@ -1,0 +1,48 @@
+	# Target directories
+target/
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.zip
+*.tar.gz
+
+# IDE specific files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Secrets and environment files
+.env
+.env.local
+*.pem
+*.key
+*serviceAccount*.json
+*adminsdk*.json
+firebase-credentials.json
+
+# Local databases / runtime data
+backend/data/
+backend/uploads/
+
+# Firebase / Google credentials
+firebase-service-account.json
+backend/firebase-service-account.json
+**/firebase-service-account.json
+
+# Local IDE/runtime
+.dart_tool/
+build/

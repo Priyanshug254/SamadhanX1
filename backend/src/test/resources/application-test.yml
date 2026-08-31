@@ -1,0 +1,42 @@
+# ================================================================
+# SamadhanX Backend — Test Configuration
+# ================================================================
+# Uses H2 in-memory database so tests run without any external
+# services. Schema is auto-created by Hibernate (create-drop).
+# ================================================================
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:samadhanx_test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;NON_KEYWORDS=VALUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  # Disable sql.init in tests — Hibernate manages the schema
+  sql:
+    init:
+      mode: never
+
+samadhanx:
+  supabase:
+    issuer: "https://test.supabase.co/auth/v1"
+  jwt:
+    secret: "test-secret-key-which-is-at-least-32-characters-long-for-hs256"
+    expiry-ms: 3600000
+    refresh-expiry-ms: 86400000
+  security:
+    bcrypt-strength: 4   # Reduced strength for fast tests
+
+logging:
+  level:
+    root: WARN
+    com.samadhanx: INFO

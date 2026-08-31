@@ -1,0 +1,46 @@
+# ================================================================
+# SamadhanX Backend — Development Profile Configuration
+# ================================================================
+# Activated when SPRING_PROFILES_ACTIVE=dev
+# Values here are overridden by environment variables when set.
+# ================================================================
+
+spring:
+  # ── Database ──────────────────────────────────────────────────
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/samadhanx_dev;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VALUE}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    hikari:
+      pool-name: SamadhanX-HikariPool
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ── JPA / Hibernate ──────────────────────────────────────────
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false               # Set to true temporarily for debugging only
+    properties:
+      hibernate:
+        format_sql: true
+
+  # ── Schema Creation ───────────────────────────────────────────
+  sql:
+    init:
+      mode: never
+
+# ── Logging ──────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.samadhanx: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

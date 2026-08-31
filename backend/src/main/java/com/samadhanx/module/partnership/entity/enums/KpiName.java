@@ -1,0 +1,12 @@
+package com.samadhanx.module.partnership.entity.enums;
+
+public enum KpiName {
+    PEOPLE_BENEFITED,
+    COST_REDUCTION_PERCENT,
+    WATER_SAVED_LITERS_PER_DAY,
+    ENERGY_SAVED_KWH,
+    POLLUTION_REDUCED_PERCENT,
+    TIME_SAVED_HOURS_PER_DAY,
+    VILLAGES_COVERED,
+    HEALTHCARE_OUTCOMES_IMPROVED
+}

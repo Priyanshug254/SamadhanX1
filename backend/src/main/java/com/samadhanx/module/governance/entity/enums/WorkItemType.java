@@ -1,0 +1,14 @@
+package com.samadhanx.module.governance.entity.enums;
+
+public enum WorkItemType {
+    CHALLENGE_TRIAGE,
+    CHALLENGE_RESOLUTION,
+    PROPOSAL_REVIEW,
+    PROPOSAL_EVALUATION,
+    TEAM_FORMATION,
+    PARTNER_MATCHING,
+    SPONSORSHIP_APPROVAL,
+    PILOT_DEPLOYMENT,
+    IMPACT_VERIFICATION,
+    GENERAL_TASK
+}

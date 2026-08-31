@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "654314833549",
+    "project_id": "samadhanx-4c616",
+    "storage_bucket": "samadhanx-4c616.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:654314833549:android:a26e4cde51234fc01204c4",
+        "android_client_info": {
+          "package_name": "com.samadhanx.samadhanx_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_1thq9BQAoVRbKKu0_uK803PhGWWcmlU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
