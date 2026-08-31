@@ -11,6 +11,30 @@ import { ProposalDetailPage } from '../pages/innovation/ProposalDetailPage';
 import { IndustryCsrPage } from '../pages/partners/IndustryCsrPage';
 import { NationalCommandCenterPage } from '../pages/analytics/NationalCommandCenterPage';
 import { ActionCenterPage } from '../pages/governance/ActionCenterPage';
+import { useAuth } from '../context/AuthContext';
+
+const RoleBasedHomeRedirect: React.FC = () => {
+  const { user } = useAuth();
+  const primaryRole = user?.role || 'CITIZEN';
+
+  if (['FACULTY', 'STUDENT', 'UNIVERSITY_ADMIN', 'RESEARCH_LAB'].includes(primaryRole)) {
+    return <Navigate to="/innovation" replace />;
+  }
+
+  if (['STARTUP', 'MSME', 'INDUSTRY', 'CSR'].includes(primaryRole)) {
+    return <Navigate to="/partnerships" replace />;
+  }
+
+  if (['GOVERNMENT_OFFICIAL'].includes(primaryRole)) {
+    return <Navigate to="/government" replace />;
+  }
+
+  if (['SUPER_ADMIN', 'GOVERNMENT_ADMIN'].includes(primaryRole)) {
+    return <Navigate to="/action-center" replace />;
+  }
+
+  return <Navigate to="/map" replace />;
+};
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -25,7 +49,7 @@ export const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/action-center" replace />} />
+        <Route index element={<RoleBasedHomeRedirect />} />
         <Route path="action-center" element={<ActionCenterPage />} />
         
         {/* Government Portal & Aliases */}
@@ -49,7 +73,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="analytics" element={<NationalCommandCenterPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/action-center" replace />} />
+      <Route path="*" element={<RoleBasedHomeRedirect />} />
     </Routes>
   );
 };
