@@ -102,4 +102,15 @@ class LocationService {
       return null;
     }
   }
+
+  /// Calculates geodesic distance between two coordinate pairs in meters
+  double calculateDistanceInMeters(double lat1, double lon1, double lat2, double lon2) {
+    return Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
+  }
+
+  /// Checks if two coordinates are within proximity threshold (default 250m)
+  bool isWithinProximity(double lat1, double lon1, double lat2, double lon2, {double maxDistanceMeters = 250}) {
+    final distance = calculateDistanceInMeters(lat1, lon1, lat2, lon2);
+    return distance <= maxDistanceMeters;
+  }
 }

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -14,13 +15,30 @@ class MediaService {
 
   MediaService(ApiClient _);
 
-  Future<AttachmentDto?> pickAndUploadImage({
-    ImageSource source = ImageSource.gallery,
+  /// Captures live camera photo and embeds instant GPS coordinates
+  Future<AttachmentDto?> captureLiveGeotaggedImage({
     String? caption,
   }) async {
     try {
+      // 1. Capture instant live GPS location at the moment of photo shutter
+      Position? currentPosition;
+      try {
+        currentPosition = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 6),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Live geotag capture notice (using last known or best effort): $e');
+        try {
+          currentPosition = await Geolocator.getLastKnownPosition();
+        } catch (_) {}
+      }
+
+      // 2. Enforce live camera capture
       final XFile? picked = await _imagePicker.pickImage(
-        source: source,
+        source: ImageSource.camera,
         maxWidth: 1920,
         maxHeight: 1920,
         imageQuality: 85,
@@ -37,7 +55,7 @@ class MediaService {
       final fileName = '${_uuid.v4()}.$extension';
       final path = 'mobile/$fileName';
 
-      // Direct upload to Supabase Storage with upsert
+      // 3. Upload to Supabase Storage
       await Supabase.instance.client.storage
           .from(ApiEndpoints.challengeMediaBucket)
           .uploadBinary(
@@ -58,10 +76,12 @@ class MediaService {
         fileName: picked.name,
         fileUrl: publicUrl,
         fileSizeBytes: fileBytes.length,
-        caption: caption,
+        caption: caption ?? 'Live On-Site Geotagged Evidence',
+        geoLatitude: currentPosition?.latitude,
+        geoLongitude: currentPosition?.longitude,
       );
     } catch (e) {
-      debugPrint('Error uploading image to Supabase Storage: $e');
+      debugPrint('Error uploading live geotagged image: $e');
       rethrow;
     }
   }

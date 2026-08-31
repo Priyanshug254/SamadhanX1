@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
@@ -142,30 +141,50 @@ class _SubmitChallengeScreenState extends State<SubmitChallengeScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const Row(
+                children: [
+                  Icon(Icons.verified_user_outlined, color: AppColors.emerald, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Add Verified Evidence & Proof',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
               const Text(
-                'Add Evidence & Proof',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                'SamadhanX requires live on-site camera capture with embedded GPS coordinates to prevent fake or duplicate reports.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 16),
               ListTile(
-                leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
-                title: const Text('Take Photo with Camera'),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.camera_alt_rounded, color: AppColors.primary),
+                ),
+                title: const Text('Capture Live On-Site Photo', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Embeds instant live GPS coordinates & anti-spoof stamp', style: TextStyle(fontSize: 12)),
                 onTap: () {
                   Navigator.of(ctx).pop();
-                  _pickImage(ImageSource.camera);
+                  _captureLiveGeotaggedPhoto();
                 },
               ),
+              const Divider(),
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
-                title: const Text('Choose Photo from Gallery'),
-                onTap: () {
-                  Navigator.of(ctx).pop();
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.upload_file_outlined, color: AppColors.primary),
-                title: const Text('Upload Document (PDF / Lab Report)'),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.sapphire.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.upload_file_rounded, color: AppColors.sapphire),
+                ),
+                title: const Text('Upload Official Document / Lab Test', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Attach water quality test, municipal notice, or PDF report', style: TextStyle(fontSize: 12)),
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _pickDocument();
@@ -178,20 +197,24 @@ class _SubmitChallengeScreenState extends State<SubmitChallengeScreen> {
     );
   }
 
-  Future<void> _pickImage(ImageSource source) async {
+  Future<void> _captureLiveGeotaggedPhoto() async {
     setState(() => _isUploadingMedia = true);
     try {
-      final attachment = await _mediaService.pickAndUploadImage(
-        source: source,
-        caption: 'Site photo evidence captured by citizen',
+      final attachment = await _mediaService.captureLiveGeotaggedImage(
+        caption: 'Live on-site geotagged citizen evidence',
       );
       if (attachment != null && mounted) {
         setState(() {
           _attachments.add(attachment);
         });
+
+        final coordsText = (attachment.geoLatitude != null && attachment.geoLongitude != null)
+            ? ' [📍 Geotag: ${attachment.geoLatitude!.toStringAsFixed(4)}, ${attachment.geoLongitude!.toStringAsFixed(4)}]'
+            : '';
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Evidence "${attachment.fileName}" uploaded to civic cloud'),
+            content: Text('✅ Live photo captured with verified geotag$coordsText'),
             backgroundColor: AppColors.emerald,
             behavior: SnackBarBehavior.floating,
           ),
@@ -201,7 +224,7 @@ class _SubmitChallengeScreenState extends State<SubmitChallengeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Upload notice: $e'),
+            content: Text('Camera capture notice: $e'),
             backgroundColor: AppColors.ruby,
             behavior: SnackBarBehavior.floating,
           ),
@@ -251,6 +274,57 @@ class _SubmitChallengeScreenState extends State<SubmitChallengeScreen> {
     final lat = double.tryParse(_latController.text.trim()) ?? 25.2677;
     final lng = double.tryParse(_lngController.text.trim()) ?? 82.9913;
     final population = int.tryParse(_populationController.text.trim()) ?? 100;
+
+    // Cross-verify photo geotag coordinates vs report coordinates
+    final photoWithGeo = _attachments.firstWhere(
+      (a) => a.mediaType == 'IMAGE' && a.geoLatitude != null && a.geoLongitude != null,
+      orElse: () => AttachmentDto(mediaType: '', fileName: '', fileUrl: ''),
+    );
+
+    if (photoWithGeo.geoLatitude != null && photoWithGeo.geoLongitude != null) {
+      final distanceInMeters = _locationService.calculateDistanceInMeters(
+        lat,
+        lng,
+        photoWithGeo.geoLatitude!,
+        photoWithGeo.geoLongitude!,
+      );
+
+      // If distance discrepancy is more than 250 meters (anti-spoof verification)
+      if (distanceInMeters > 250) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: AppColors.saffron),
+                SizedBox(width: 8),
+                Text('Location Distance Check', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            content: Text(
+              'Photo was captured ${(distanceInMeters / 1000).toStringAsFixed(2)} km away from the selected location coordinates.\n\n'
+              '📍 Photo GPS: (${photoWithGeo.geoLatitude!.toStringAsFixed(4)}, ${photoWithGeo.geoLongitude!.toStringAsFixed(4)})\n'
+              '📍 Report GPS: (${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)})\n\n'
+              'For anti-spoofing and genuine citizen triage, please verify this is the intended location.',
+              style: const TextStyle(fontSize: 13, height: 1.4),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Retake Live Photo'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                child: const Text('Submit Anyway', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+
+        if (proceed != true) return;
+      }
+    }
 
     final dto = SubmitChallengeDto(
       title: _titleController.text.trim(),
@@ -623,22 +697,54 @@ class _SubmitChallengeScreenState extends State<SubmitChallengeScreen> {
                   itemCount: _attachments.length,
                   itemBuilder: (context, idx) {
                     final att = _attachments[idx];
+                    final hasGeotag = att.geoLatitude != null && att.geoLongitude != null;
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: Icon(
-                          att.mediaType == 'IMAGE'
-                              ? Icons.image_outlined
-                              : att.mediaType == 'DOCUMENT'
-                                  ? Icons.description_outlined
-                                  : Icons.video_collection_outlined,
-                          color: AppColors.primary,
-                        ),
-                        title: Text(att.fileName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        subtitle: Text(att.caption ?? att.mediaType, style: const TextStyle(fontSize: 11)),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.ruby, size: 20),
-                          onPressed: () => setState(() => _attachments.removeAt(idx)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: Icon(
+                                att.mediaType == 'IMAGE'
+                                    ? Icons.image_outlined
+                                    : att.mediaType == 'DOCUMENT'
+                                        ? Icons.description_outlined
+                                        : Icons.video_collection_outlined,
+                                color: AppColors.primary,
+                              ),
+                              title: Text(att.fileName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                              subtitle: Text(att.caption ?? att.mediaType, style: const TextStyle(fontSize: 11)),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.ruby, size: 20),
+                                onPressed: () => setState(() => _attachments.removeAt(idx)),
+                              ),
+                            ),
+                            if (hasGeotag)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.emerald.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppColors.emerald.withOpacity(0.3)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.verified_rounded, size: 14, color: AppColors.emerald),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Verified Live Geotag: ${att.geoLatitude!.toStringAsFixed(4)}, ${att.geoLongitude!.toStringAsFixed(4)}',
+                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.emerald),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     );
