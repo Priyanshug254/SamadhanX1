@@ -32,7 +32,7 @@ export const LoginPage: React.FC = () => {
       } else {
         await login(email, password);
       }
-      navigate('/government');
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please verify your credentials.');
     } finally {

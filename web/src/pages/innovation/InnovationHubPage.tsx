@@ -15,7 +15,13 @@ import {
   FileCheck,
 } from 'lucide-react';
 
+import { useAuth } from '../../context/AuthContext';
+
 export const InnovationHubPage: React.FC = () => {
+  const { user } = useAuth();
+  const primaryRole = user?.role || 'CITIZEN';
+  const isIndustry = ['STARTUP', 'MSME', 'INDUSTRY', 'CSR'].includes(primaryRole);
+
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [innovationChallenges, setInnovationChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -99,10 +105,14 @@ export const InnovationHubPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <Lightbulb className="w-6 h-6 text-amber-500" />
-            <span>University & Research Innovation Hub</span>
+            <span>
+              {isIndustry ? 'Ecosystem R&D & Prototype Pipeline' : 'University & Research Innovation Hub'}
+            </span>
           </h1>
           <p className="text-sm text-slate-500">
-            Multidisciplinary faculty-student team formation, solution development, and TRL technology maturation
+            {isIndustry
+              ? 'Review multidisciplinary academic prototypes, evaluate TRL technology readiness, and bid for commercialization & pilot testing'
+              : 'Multidisciplinary faculty-student team formation, solution development, and TRL technology maturation'}
           </p>
         </div>
 
@@ -111,7 +121,7 @@ export const InnovationHubPage: React.FC = () => {
           className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-xs font-bold hover:from-amber-400 hover:to-amber-500 transition-all flex items-center gap-2 shadow-md shadow-amber-500/20"
         >
           <Plus className="w-4 h-4" />
-          <span>Submit Solution Proposal</span>
+          <span>{isIndustry ? 'Submit Startup Proposal' : 'Submit Solution Proposal'}</span>
         </button>
       </div>
 
